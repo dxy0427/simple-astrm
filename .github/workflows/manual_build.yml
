@@ -1,0 +1,61 @@
+name: 构建
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: '镜像标签（默认：latest）'
+        required: false
+        default: 'latest'
+
+jobs:
+  build-and-push-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write  # 允许推送镜像到GHCR
+      contents: read   # 允许读取仓库代码
+    steps:
+      - name: 检查代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录 GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 提取镜像标签
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.actor }}/simple-astrm  # 镜像名与项目名一致
+          tags: |
+            ${{ github.event.inputs.image-tag }}
+            ${{ github.sha }}  # 用commit哈希做版本标签
+          flavor: |
+            latest=${{ github.event.inputs.image-tag == 'latest' }}
+
+      - name: 构建并推送镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: .  # 构建上下文：项目根目录
+          file: ./Dockerfile  # 正确的Dockerfile路径
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64  # 单一构建平台
+          cache-from: type=gha  # 缓存加速
+          cache-to: type=gha,mode=max
+
+      - name: 输出镜像信息
+        run: |
+          echo "✅ 镜像构建推送完成！"
+          echo "📦 镜像地址：${{ steps.meta.outputs.tags }}"
+          echo "💡 拉取命令：docker pull ghcr.io/${{ github.actor }}/simple-astrm:${{ github.event.inputs.image-tag }}"
+          echo "🟢 运行命令：docker run -d -p 8095:8095 -v \$(pwd)/config.yaml:/app/config.yaml --restart always ghcr.io/${{ github.actor }}/simple-astrm:${{ github.event.inputs.image-tag }}"
