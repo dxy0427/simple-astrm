@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"simple-astrm/config"
+	"strconv"
 )
 
 type EmbyServer struct {
@@ -17,7 +18,7 @@ type EmbyServer struct {
 func NewEmbyServer() *EmbyServer {
 	target, _ := url.Parse(config.Cfg.Emby.Addr)
 	proxy := httputil.NewSingleHostReverseProxy(target)
-	
+
 	// 自定义 Director 以保留 Host 头
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
@@ -48,26 +49,43 @@ func (s *EmbyServer) QueryItem(ids string) (*EmbyItemsResponse, error) {
 	return &res, nil
 }
 
-// 结构体定义 (只保留关键字段)
-type EmbyItemsResponse struct {
-	Items []struct {
-		Path         string        `json:"Path"`
-		MediaSources []MediaSource `json:"MediaSources"`
-	} `json:"Items"`
-}
+// ================= 参考原项目的结构体定义 =================
 
-type MediaSource struct {
-	ID                   string `json:"Id"`
-	Path                 string `json:"Path"`
-	Protocol             string `json:"Protocol"`
-	SupportsDirectPlay   bool   `json:"SupportsDirectPlay"`
-	SupportsDirectStream bool   `json:"SupportsDirectStream"`
-	SupportsTranscoding  bool   `json:"SupportsTranscoding"` // 修复编译错误：新增此字段
-	DirectStreamUrl      string `json:"DirectStreamUrl,omitempty"`
-	TranscodingUrl       string `json:"TranscodingUrl,omitempty"`
-	TranscodingContainer string `json:"TranscodingContainer,omitempty"`
+type EmbyItemsResponse struct {
+	Items []BaseItemDto `json:"Items"`
 }
 
 type PlaybackInfoResponse struct {
-	MediaSources []MediaSource `json:"MediaSources"`
+	MediaSources []MediaSourceInfo `json:"MediaSources"`
+}
+
+type BaseItemDto struct {
+	Path         *string           `json:"Path"`
+	MediaSources []MediaSourceInfo `json:"MediaSources"`
+}
+
+type MediaSourceInfo struct {
+	ID                   *string `json:"Id"`
+	Path                 *string `json:"Path"`
+	Protocol             *string `json:"Protocol"`
+	ItemID               *string `json:"ItemId"`
+	Name                 *string `json:"Name"`
+	Container            *string `json:"Container"` // 容器类型
+	SupportsDirectPlay   *bool   `json:"SupportsDirectPlay"`
+	SupportsDirectStream *bool   `json:"SupportsDirectStream"`
+	SupportsTranscoding  *bool   `json:"SupportsTranscoding"` // 修复报错的关键字段
+	DirectStreamUrl      *string `json:"DirectStreamUrl,omitempty"`
+	TranscodingUrl       *string `json:"TranscodingUrl,omitempty"`
+	TranscodingContainer *string `json:"TranscodingContainer,omitempty"`
+	TranscodingSubProtocol *string `json:"TranscodingSubProtocol,omitempty"`
+}
+
+// 辅助函数：创建 Bool 指针
+func BoolPtr(b bool) *bool {
+	return &b
+}
+
+// 辅助函数：创建 String 指针
+func StrPtr(s string) *string {
+	return &s
 }
