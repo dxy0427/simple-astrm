@@ -2,17 +2,15 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod* go.sum* ./
-
-RUN if [ ! -f go.mod ]; then go mod init simple-astrm; fi && \
-    go get github.com/gin-gonic/gin@v1.9.1 && \
-    go get github.com/sirupsen/logrus@v1.9.3 && \
-    go get gopkg.in/yaml.v3@v3.0.1 && \
-    go get github.com/andybalholm/brotli@v1.1.0 && \
-    go mod tidy && go mod download
-
+# 第一步：先复制全部代码（让 go mod tidy 能扫描到所有依赖）
 COPY . .
 
+# 第二步：初始化模块 + 自动识别并下载所有依赖（包括第三方包和本地包）
+RUN go mod init simple-astrm && \
+    go mod tidy && \
+    go mod download
+
+# 第三步：静态编译
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o simple-astrm main.go
 
 FROM alpine:3.20
