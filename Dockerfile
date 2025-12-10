@@ -2,13 +2,13 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY go.mod* go.sum* ./
 
-RUN go mod tidy && go mod download
+RUN if [ ! -f go.mod ]; then go mod init github.com/dxy0427/simple-astrm; fi && go mod tidy && go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o go-emby-proxy main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o simple-astrm main.go
 
 FROM alpine:3.20
 
@@ -21,7 +21,7 @@ USER appuser
 
 WORKDIR /app
 
-COPY --from=builder /app/go-emby-proxy ./
+COPY --from=builder /app/simple-astrm ./
 COPY --from=builder /app/config.yaml.example ./config.yaml.example
 
 EXPOSE 8095
