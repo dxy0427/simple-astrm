@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"simple-astrm/config"
 	"strconv"
+	"strings"
 )
 
 type EmbyServer struct {
@@ -33,7 +34,10 @@ func NewEmbyServer() *EmbyServer {
 func (s *EmbyServer) QueryItem(ids string) (*EmbyItemsResponse, error) {
 	params := url.Values{}
 	params.Add("Ids", ids)
+	// 使用 strconv 解决 "imported and not used" 错误，同时限制查询数量为 1
+	params.Add("Limit", strconv.Itoa(1)) 
 	params.Add("Fields", "Path,MediaSources")
+	params.Add("Recursive", "true")
 	params.Add("api_key", config.Cfg.Emby.ApiKey)
 
 	api := config.Cfg.Emby.Addr + "/Items?" + params.Encode()
@@ -49,7 +53,7 @@ func (s *EmbyServer) QueryItem(ids string) (*EmbyItemsResponse, error) {
 	return &res, nil
 }
 
-// ================= 参考原项目的结构体定义 =================
+// ================= 结构体定义 (参考原项目使用指针) =================
 
 type EmbyItemsResponse struct {
 	Items []BaseItemDto `json:"Items"`
@@ -65,18 +69,18 @@ type BaseItemDto struct {
 }
 
 type MediaSourceInfo struct {
-	ID                   *string `json:"Id"`
-	Path                 *string `json:"Path"`
-	Protocol             *string `json:"Protocol"`
-	ItemID               *string `json:"ItemId"`
-	Name                 *string `json:"Name"`
-	Container            *string `json:"Container"` // 容器类型
-	SupportsDirectPlay   *bool   `json:"SupportsDirectPlay"`
-	SupportsDirectStream *bool   `json:"SupportsDirectStream"`
-	SupportsTranscoding  *bool   `json:"SupportsTranscoding"` // 修复报错的关键字段
-	DirectStreamUrl      *string `json:"DirectStreamUrl,omitempty"`
-	TranscodingUrl       *string `json:"TranscodingUrl,omitempty"`
-	TranscodingContainer *string `json:"TranscodingContainer,omitempty"`
+	ID                     *string `json:"Id"`
+	Path                   *string `json:"Path"`
+	Protocol               *string `json:"Protocol"`
+	ItemID                 *string `json:"ItemId"`
+	Name                   *string `json:"Name"`
+	Container              *string `json:"Container"`
+	SupportsDirectPlay     *bool   `json:"SupportsDirectPlay"`
+	SupportsDirectStream   *bool   `json:"SupportsDirectStream"`
+	SupportsTranscoding    *bool   `json:"SupportsTranscoding"`
+	DirectStreamUrl        *string `json:"DirectStreamUrl,omitempty"`
+	TranscodingUrl         *string `json:"TranscodingUrl,omitempty"`
+	TranscodingContainer   *string `json:"TranscodingContainer,omitempty"`
 	TranscodingSubProtocol *string `json:"TranscodingSubProtocol,omitempty"`
 }
 
