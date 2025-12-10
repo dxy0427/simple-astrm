@@ -12,8 +12,8 @@ jobs:
   build-and-push-ghcr:
     runs-on: ubuntu-latest
     permissions:
-      packages: write  # 允许推送镜像到GHCR
-      contents: read   # 允许读取仓库代码
+      packages: write
+      contents: read
     steps:
       - name: 检查代码
         uses: actions/checkout@v4
@@ -34,26 +34,26 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.actor }}/simple-astrm  # 镜像名与项目名一致
+            ghcr.io/${{ github.actor }}/simple-astrm
           tags: |
             ${{ github.event.inputs.image-tag }}
-            ${{ github.sha }}  # 用commit哈希做版本标签
+            ${{ github.sha }}
           flavor: |
             latest=${{ github.event.inputs.image-tag == 'latest' }}
 
       - name: 构建并推送镜像
         uses: docker/build-push-action@v5
         with:
-          context: .  # 构建上下文：项目根目录
-          file: ./Dockerfile  # 指向上述Dockerfile
+          context: .
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64  # 单一构建平台
-          cache-from: type=gha  # 缓存加速二次构建
+          platforms: linux/amd64
+          cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 输出镜像使用信息
+      - name: 输出镜像信息
         run: |
           echo "✅ 镜像构建推送完成！"
           echo "📦 镜像地址：${{ steps.meta.outputs.tags }}"
