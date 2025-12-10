@@ -14,18 +14,17 @@ type Action struct {
 	Args string `yaml:"args"`
 }
 
+// HttpStrm 简化为单对象
 type HttpStrm struct {
-	Enable    bool     `yaml:"enable"`
-	Match     string   `yaml:"match"`
 	Actions   []Action `yaml:"actions"`
 	TransCode bool     `yaml:"transCode"`
 	FinalURL  bool     `yaml:"finalURL"`
 }
 
 type EmbyConfig struct {
-	Addr     string     `yaml:"addr"`
-	ApiKey   string     `yaml:"apiKey"`
-	HttpStrm []HttpStrm `yaml:"httpStrm"`
+	Addr     string   `yaml:"addr"`
+	ApiKey   string   `yaml:"apiKey"`
+	HttpStrm HttpStrm `yaml:"httpStrm"` // 修改为单结构体，非数组
 }
 
 type Config struct {
