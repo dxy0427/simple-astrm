@@ -6,7 +6,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// 全局配置实例
 var Cfg *Config
 
 type Action struct {
@@ -14,7 +13,6 @@ type Action struct {
 	Args string `yaml:"args"`
 }
 
-// HttpStrm 简化为单对象
 type HttpStrm struct {
 	Actions   []Action `yaml:"actions"`
 	TransCode bool     `yaml:"transCode"`
@@ -24,7 +22,7 @@ type HttpStrm struct {
 type EmbyConfig struct {
 	Addr     string   `yaml:"addr"`
 	ApiKey   string   `yaml:"apiKey"`
-	HttpStrm HttpStrm `yaml:"httpStrm"` // 修改为单结构体，非数组
+	HttpStrm HttpStrm `yaml:"httpStrm"`
 }
 
 type Config struct {
