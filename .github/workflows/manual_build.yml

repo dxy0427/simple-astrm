@@ -45,15 +45,15 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .  # 构建上下文：项目根目录
-          file: ./Dockerfile  # 正确的Dockerfile路径
+          file: ./Dockerfile  # 指向上述Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64  # 单一构建平台
-          cache-from: type=gha  # 缓存加速
+          cache-from: type=gha  # 缓存加速二次构建
           cache-to: type=gha,mode=max
 
-      - name: 输出镜像信息
+      - name: 输出镜像使用信息
         run: |
           echo "✅ 镜像构建推送完成！"
           echo "📦 镜像地址：${{ steps.meta.outputs.tags }}"
