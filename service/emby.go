@@ -17,7 +17,17 @@ type EmbyServer struct {
 }
 
 func NewEmbyServer() *EmbyServer {
-	target, _ := url.Parse(config.Cfg.Emby.Addr)
+	// 获取配置地址
+	addr := config.Cfg.Emby.Addr
+	
+	// 补全 http 前缀 (使用 strings 包，解决编译报错)
+	if !strings.HasPrefix(addr, "http") {
+		addr = "http://" + addr
+	}
+	// 去除末尾斜杠
+	addr = strings.TrimSuffix(addr, "/")
+
+	target, _ := url.Parse(addr)
 	proxy := httputil.NewSingleHostReverseProxy(target)
 
 	// 自定义 Director 以保留 Host 头
@@ -34,13 +44,14 @@ func NewEmbyServer() *EmbyServer {
 func (s *EmbyServer) QueryItem(ids string) (*EmbyItemsResponse, error) {
 	params := url.Values{}
 	params.Add("Ids", ids)
-	// 使用 strconv 解决 "imported and not used" 错误，同时限制查询数量为 1
-	params.Add("Limit", strconv.Itoa(1)) 
+	params.Add("Limit", strconv.Itoa(1))
 	params.Add("Fields", "Path,MediaSources")
 	params.Add("Recursive", "true")
 	params.Add("api_key", config.Cfg.Emby.ApiKey)
 
-	api := config.Cfg.Emby.Addr + "/Items?" + params.Encode()
+	// 使用处理过的 Target 地址，而不是直接用 config 中的原始地址
+	api := s.Target.String() + "/Items?" + params.Encode()
+	
 	resp, err := http.Get(api)
 	if err != nil {
 		return nil, err
@@ -84,12 +95,12 @@ type MediaSourceInfo struct {
 	TranscodingSubProtocol *string `json:"TranscodingSubProtocol,omitempty"`
 }
 
-// 辅助函数：创建 Bool 指针
+// 辅助函数：创建 Bool 指针 (供 proxy 包调用)
 func BoolPtr(b bool) *bool {
 	return &b
 }
 
-// 辅助函数：创建 String 指针
+// 辅助函数：创建 String 指针 (供 proxy 包调用)
 func StrPtr(s string) *string {
 	return &s
 }
