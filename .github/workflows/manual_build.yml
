@@ -1,4 +1,4 @@
-name: 构建
+name: 手动构建 simple-astrm 镜像到 GHCR
 
 on:
   workflow_dispatch:
