@@ -4,7 +4,12 @@ WORKDIR /app
 
 COPY go.mod* go.sum* ./
 
-RUN if [ ! -f go.mod ]; then go mod init simple-astrm; fi && go mod tidy && go mod download
+RUN if [ ! -f go.mod ]; then go mod init simple-astrm; fi && \
+    go get github.com/gin-gonic/gin@v1.9.1 && \
+    go get github.com/sirupsen/logrus@v1.9.3 && \
+    go get gopkg.in/yaml.v3@v3.0.1 && \
+    go get github.com/andybalholm/brotli@v1.1.0 && \
+    go mod tidy && go mod download
 
 COPY . .
 
