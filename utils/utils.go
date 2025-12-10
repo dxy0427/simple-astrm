@@ -3,16 +3,13 @@ package utils
 import (
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/andybalholm/brotli"
-	"github.com/sirupsen/logrus"
 )
 
 // 获取URL的最终目标地址（自动跟踪重定向）
