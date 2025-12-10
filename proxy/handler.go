@@ -90,12 +90,15 @@ func handlePlaybackInfo(c *gin.Context) {
 		}
 
 		for i, ms := range info.MediaSources {
+			if ms.ID == nil {
+				continue
+			}
 			// ID 处理 (兼容 emby 4.9+)
 			itemID := strings.TrimPrefix(*ms.ID, "mediasource_")
 
 			// 查询 Item 物理路径用于匹配规则
 			itemRes, err := embyServer.QueryItem(itemID)
-			if err != nil || len(itemRes.Items) == 0 {
+			if err != nil || len(itemRes.Items) == 0 || itemRes.Items[0].Path == nil {
 				continue
 			}
 			itemPath := *itemRes.Items[0].Path
@@ -153,7 +156,7 @@ func handleStream(c *gin.Context) {
 	}
 	cleanID := strings.TrimPrefix(msID, "mediasource_")
 
-	// 从 URL 提取 ItemID
+	// 从 URL 提取 ItemID (/Videos/{ItemID}/stream)
 	urlParts := strings.Split(c.Request.URL.Path, "/")
 	var itemID string
 	for i, part := range urlParts {
@@ -165,16 +168,11 @@ func handleStream(c *gin.Context) {
 
 	// 查询 Item
 	itemRes, err := embyServer.QueryItem(itemID)
-	if err != nil || len(itemRes.Items) == 0 {
+	if err != nil || len(itemRes.Items) == 0 || itemRes.Items[0].Path == nil {
 		embyServer.Proxy.ServeHTTP(c.Writer, c.Request)
 		return
 	}
 
-	// 物理路径
-	if itemRes.Items[0].Path == nil {
-		embyServer.Proxy.ServeHTTP(c.Writer, c.Request)
-		return
-	}
 	realPath := *itemRes.Items[0].Path
 
 	// 规则匹配
@@ -184,18 +182,21 @@ func handleStream(c *gin.Context) {
 			// 找到对应的 MediaSource
 			var targetMS *service.MediaSourceInfo
 			for _, ms := range itemRes.Items[0].MediaSources {
-				if strings.TrimPrefix(*ms.ID, "mediasource_") == cleanID {
+				if ms.ID != nil && strings.TrimPrefix(*ms.ID, "mediasource_") == cleanID {
 					targetMS = &ms
 					break
 				}
 			}
-			// 容错
+			// 容错：如果没找到 ID 且只有一个源，默认就是它
 			if targetMS == nil && len(itemRes.Items[0].MediaSources) == 1 {
 				targetMS = &itemRes.Items[0].MediaSources[0]
 			}
 
 			if targetMS != nil && targetMS.Protocol != nil && (*targetMS.Protocol == "Http" || *targetMS.Protocol == "Https") {
 				// 获取 Strm 里的真实链接
+				if targetMS.Path == nil {
+					break 
+				}
 				finalURL := *targetMS.Path
 
 				// 执行替换 (例如把 127.0.0.1 换成 公网IP)
@@ -224,6 +225,7 @@ func handleStream(c *gin.Context) {
 		}
 	}
 
+	// 没匹配到规则或不是 Strm，走 Emby 默认流（如果 Emby 支持的话）
 	embyServer.Proxy.ServeHTTP(c.Writer, c.Request)
 }
 
