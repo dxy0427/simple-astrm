@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY go.mod* go.sum* ./
 
-RUN if [ ! -f go.mod ]; then go mod init github.com/dxy0427/simple-astrm; fi && go mod tidy && go mod download
+RUN if [ ! -f go.mod ]; then go mod init simple-astrm; fi && go mod tidy && go mod download
 
 COPY . .
 
