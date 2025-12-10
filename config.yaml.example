@@ -3,10 +3,11 @@ emby:
   addr: http://youremby.com
   apiKey: xxx
   httpStrm:
-    - enable: true
-      match: /data/media
-      actions:
-        - type: replace
-          args: host.docker.internal -> youremby.com
-      transCode: false
-      finalURL: true
+    actions:
+      # 将 Emby 解析出的内网链接替换为公网链接
+      - type: replace
+        args: host.docker.internal -> youremby.com
+      - type: replace
+        args: 127.0.0.1:5244 -> your-alist-domain.com
+    transCode: false
+    finalURL: false
