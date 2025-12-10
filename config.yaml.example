@@ -1,0 +1,12 @@
+listen: :8095
+emby:
+  addr: http://youremby.com
+  apiKey: xxx
+  httpStrm:
+    - enable: true
+      match: /data/media
+      actions:
+        - type: replace
+          args: host.docker.internal -> youremby.com
+      transCode: false
+      finalURL: true
