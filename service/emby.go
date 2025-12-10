@@ -57,14 +57,15 @@ type EmbyItemsResponse struct {
 }
 
 type MediaSource struct {
-	ID                   string            `json:"Id"`
-	Path                 string            `json:"Path"`
-	Protocol             string            `json:"Protocol"`
-	SupportsDirectPlay   bool              `json:"SupportsDirectPlay"`
-	SupportsDirectStream bool              `json:"SupportsDirectStream"`
-	DirectStreamUrl      string            `json:"DirectStreamUrl,omitempty"`
-	TranscodingUrl       string            `json:"TranscodingUrl,omitempty"`
-	TranscodingContainer string            `json:"TranscodingContainer,omitempty"`
+	ID                   string `json:"Id"`
+	Path                 string `json:"Path"`
+	Protocol             string `json:"Protocol"`
+	SupportsDirectPlay   bool   `json:"SupportsDirectPlay"`
+	SupportsDirectStream bool   `json:"SupportsDirectStream"`
+	SupportsTranscoding  bool   `json:"SupportsTranscoding"` // 修复编译错误：新增此字段
+	DirectStreamUrl      string `json:"DirectStreamUrl,omitempty"`
+	TranscodingUrl       string `json:"TranscodingUrl,omitempty"`
+	TranscodingContainer string `json:"TranscodingContainer,omitempty"`
 }
 
 type PlaybackInfoResponse struct {
