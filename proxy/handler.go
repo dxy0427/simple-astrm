@@ -20,7 +20,8 @@ var (
 	embyServer *service.EmbyServer
 	// 正则匹配
 	regexPlaybackInfo = regexp.MustCompile(`(?i)/Items/\d+/PlaybackInfo`)
-	regexStream       = regexp.MustCompile(`(?i)/Videos/\d+/(stream|original)`)
+	// 稍微放宽匹配，确保能抓到 /emby/Videos/...
+	regexStream       = regexp.MustCompile(`(?i)/Videos/(.*)/(stream|original)`)
 	regexBaseJs       = regexp.MustCompile(`(?i)basehtmlplayer.js`)
 )
 
@@ -157,13 +158,11 @@ func handleStream(c *gin.Context) {
 	cleanID := strings.TrimPrefix(msID, "mediasource_")
 
 	// 从 URL 提取 ItemID (/Videos/{ItemID}/stream)
-	urlParts := strings.Split(c.Request.URL.Path, "/")
-	var itemID string
-	for i, part := range urlParts {
-		if strings.EqualFold(part, "Videos") && i+1 < len(urlParts) {
-			itemID = urlParts[i+1]
-			break
-		}
+	// regex: /Videos/(.*)/(stream|original)
+	matches := regexStream.FindStringSubmatch(c.Request.URL.Path)
+	itemID := ""
+	if len(matches) >= 2 {
+		itemID = matches[1]
 	}
 
 	// 查询 Item
@@ -192,6 +191,7 @@ func handleStream(c *gin.Context) {
 				targetMS = &itemRes.Items[0].MediaSources[0]
 			}
 
+			// 如果是 Http 协议的 Strm
 			if targetMS != nil && targetMS.Protocol != nil && (*targetMS.Protocol == "Http" || *targetMS.Protocol == "Https") {
 				// 获取 Strm 里的真实链接
 				if targetMS.Path == nil {
@@ -218,14 +218,14 @@ func handleStream(c *gin.Context) {
 					}
 				}
 
-				logrus.Infof("302 重定向 -> %s", finalURL)
+				logrus.Infof("HttpStrm 重定向至: %s", finalURL)
 				c.Redirect(http.StatusFound, finalURL)
 				return
 			}
 		}
 	}
 
-	// 没匹配到规则或不是 Strm，走 Emby 默认流（如果 Emby 支持的话）
+	// 没匹配到规则或不是 Strm，走 Emby 默认流
 	embyServer.Proxy.ServeHTTP(c.Writer, c.Request)
 }
 
