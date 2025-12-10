@@ -7,8 +7,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"simple-astrm/config"
-	"strconv"
-	"strings"
 )
 
 type EmbyServer struct {
